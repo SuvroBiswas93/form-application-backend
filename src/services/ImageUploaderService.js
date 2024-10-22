@@ -1,6 +1,8 @@
 const multer = require("multer");
 const path = require("path");
 
+const isDev = process.env.NODE_ENV === "development" || process.env.NODE_ENV == "develop"
+
 
 const publicFolderPath = path.join(__dirname, "../../public");
 
@@ -19,16 +21,22 @@ const fileFilter = (_, file, cb) => {
 };
 
 //multer config
-const storage = multer.diskStorage({
-  destination: publicFolderPath,
-  filename(req, file, cb) {
-    cb(null, "google-form-content-questions-" + Date.now() + path.extname(file.originalname));
-  },
-});
+const getStorage = ()=> {
+  if(isDev) {
+    return multer.diskStorage({
+      destination: publicFolderPath,
+      filename(req, file, cb) {
+        cb(null, "google-form-content-questions-" + Date.now() + path.extname(file.originalname));
+      },
+    });
+  }
+  return multer.memoryStorage();
+  
+}
 
 
 const imageUploader = multer({
-  storage: storage,
+  storage: getStorage(),
   fileFilter: fileFilter,
   limits: {
     fileSize: 5 * 1024 * 1024, // 5 MB
@@ -41,17 +49,8 @@ const isMulterError = (err) => {
     }
     return false;
 }
-const handleMulterError = ( res, err) => {
-    // Handle Multer errors (e.g., file too large)
-    if (err.code === "LIMIT_FILE_SIZE") {
-    return res.status(400).json({ error: "File too large. Maximum size allowed is 5 MB." });
-    }
-    return res.status(400).json({ error: err.message });
-}
-
 
 module.exports  = {
     imageUploader,
-    isMulterError,
-    handleMulterError
+    isMulterError
 };
