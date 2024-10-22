@@ -1,7 +1,7 @@
 const router = require('express').Router();
-const userController = require('../controllers/user');
-
-router.get("/", userController.getUsers);
-router.route("/:userId/forms").get(userController.getAllFormsOfUser);
+const UserService = require('../services/UserService')
+router.route("/login")
+.get(UserService.loginGet)
+.post(UserService.login);
 
 module.exports = router;
