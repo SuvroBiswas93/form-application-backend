@@ -12,7 +12,7 @@ const schemas = {
     body: yup.object({
       name: yup.string().min(4).required(),
       description: yup.string().max(100).optional(),
-      started: yup.boolean().required(),
+      started: yup.boolean().default(false),
       questions: yup.array().of(yup.object({
         open: yup.boolean().required(),
         questionText: yup.string().min(6).max(150).required(),
