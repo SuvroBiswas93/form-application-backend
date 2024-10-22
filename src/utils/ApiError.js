@@ -1,6 +1,6 @@
 const createError = require('http-errors');
 
-class ApiError extends createError.HttpError {
+class ApiError {
     /**
      * Custom API Error Wrapper around http-errors.
      * @param {number} statusCode - HTTP status code (e.g., 400, 500).
@@ -11,9 +11,15 @@ class ApiError extends createError.HttpError {
         const formattedMessage = 
             typeof message === 'object' ? JSON.stringify(message) : String(message);
 
-        // Use http-errors to create the error object
-        super(statusCode, formattedMessage);
+        // Create an error using http-errors
+        const error = createError(statusCode, formattedMessage);
+
+        // Assign the error properties to the instance
+        this.name = error.name;
+        this.message = error.message;
+        this.status = error.status;
+        this.stack = error.stack;
     }
 }
 
-module.exports = {ApiError};
+module.exports = { ApiError };
