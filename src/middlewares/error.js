@@ -4,6 +4,7 @@ const { ApiError } = require("../utils/ApiError");
 const isDev = ["development", "dev", "develop"].includes(process.env.NODE_ENV ?? "");
 const errorHandler = (err, _, res, __) => {
   let convertedError = err;
+  console.log(convertedError)
   if(isDev) {
     console.error(err);
   }

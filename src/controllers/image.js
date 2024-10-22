@@ -3,7 +3,6 @@ const imageService = require("../services/ImageService");
 module.exports = {
 
     getImages: async (req, res)=> {
-        throw new Error("something gone wrong")
         const images = await imageService.getImages();
         return res.json(images);
     },
