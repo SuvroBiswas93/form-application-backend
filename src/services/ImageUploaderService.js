@@ -1,5 +1,7 @@
 const multer = require("multer");
 const path = require("path");
+const {uploadImageBufferToCloudinary} = require("../lib/cloudinary");
+
 
 const isDev = process.env.NODE_ENV === "development" || process.env.NODE_ENV == "develop"
 
@@ -50,7 +52,30 @@ const isMulterError = (err) => {
     return false;
 }
 
+const uploadSingleImage = async (imageName, req,res)=> {
+  return new Promise((resolve, reject)=> {
+    imageUploader.single(imageName)(req,res, async function(error) {
+        if(error) {
+            if(isMulterError(error)) {
+                return reject(new ApiError(400, error.message));
+            }
+            return reject(new ApiError(500, error.message));
+         }
+         try {
+            if(isDev) {
+              return resolve(req.file.filename);
+            }
+            const uploadedImage = await uploadImageBufferToCloudinary(req.file);
+            return resolve(uploadedImage.secure_url);
+         } catch(error) {
+            return reject(error);
+         }
+    });
+})
+}
+
 module.exports  = {
     imageUploader,
-    isMulterError
+    isMulterError,
+    uploadSingleImage
 };
