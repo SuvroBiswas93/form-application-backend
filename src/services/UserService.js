@@ -46,7 +46,7 @@ module.exports = {
             return res.status(400).json({error: "Invalid password"});
           }
           const accessToken = jwt.sign({email, name: user.name, id: user._id}, SECRET_KEY, {expiresIn: '24h'});
-          return res.json({ accessToken, user: {email, name:user.name} });
+          return res.json({ accessToken, user: {email, name:user.name, id: user._id} });
         } catch (error) {
           return res.status(500).json({error: "something went wrong"});
         }

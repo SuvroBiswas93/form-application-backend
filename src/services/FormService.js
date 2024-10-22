@@ -6,35 +6,32 @@ module.exports = {
     formsGet : async(req,res)=>{
         try{
             var result = await FormModel.find().lean();
-            res.send(result);     
+           return res.status(200).json(result);     
         }catch(e){
-            res.send(e);
+           return res.status(500).send(e);
         }
     },
 
     createForm: async(req,res)=>{     
         try {
-             var data = {
+             const data = {
                 createdBy : req.body.createdBy,
                 name: req.body.name,
                 description: req.body.description
              }
 
-            var newForm = new FormModel(data)
-            await newForm.save().then((docs)=>{
-                UserModel.updateOne(
-                    {_id: data.createdBy },
-                    { $push: { createdForms: docs._id}})
-                    .then(()=>{
-                    console.log("Form id added to user deeatils");
-                }).catch(error => console.log("got some error"))  
-                res.status(200).json(
-                    docs
-                );
-            })
+            const form = new FormModel(data);
+            const newForm = await form.save();
+         
+           await UserModel.updateOne({
+                _id: data.createdBy
+            },
+            { $push: { createdForms: newForm._id}});
+
+            return res.status(200).json(newForm);
 
         } catch (error) {
-            res.send(error)
+            res.status(500).send(error)
         }
     },
 
@@ -42,48 +39,34 @@ module.exports = {
         try {
             var formId = req.params.formId;
 
-            await FormModel.findOne({_id: formId}).then(async(form)=>{
-                 
-                 if(form == null){
-                     res.status(404).send('Form not found');
-                 } else{ 
-                     res.status(200).json(form)
-                 }
-             })
+            const form = await FormModel.findOne({_id: formId});
+            if(!form) {
+                return res.status(404).json({error:"Form not found"});
+            }
+            return res.status(200).json(form);
 
         } catch (error) {
-            res.send(error)
+           return res.status(500).send(error);
         }
     },
     
     deleteForm: async(req, res)=>{
-
+        console.log({de: "delete"})
         try {
-            var formId = req.params.formId;
-            var userId = req.params.userId;
+            const formId = req.params.formId;
+            const userId = req.params.userId;
+          
+            const form = await FormModel.findOne({_id: formId}).lean();
 
-            console.log(formId);
-            console.log(userId);
-
-            await FormModel.findOne({_id: formId}).then(async(form)=>{ 
-                 console.log(form);
-                if(form== null){
-                    res.status(404).send('Form not found or already deleted');
-                } else { 
-                    if(form.createdBy == userId){
-                        form.remove(function(err) {
-                            if(err) { return res.status(500).send(err) }
-                            console.log('Form deleted');                 
-                            return res.status(202).send("Form Deleted")
-                          });                       
-                    } 
-                    else{
-                        res.status(401).send("You are not the owner of this Form");
-                    }
-                }
-            });
-        } catch (error) {
+            if(form != null && form.createdBy == userId) {
+                await FormModel.deleteOne({_id: formId});
+                return res.status(200).end();
+            }
             
+            return res.status(400).end();
+
+        } catch (error) {
+            return res.status(500).send(error);
         }
     },
 
@@ -195,17 +178,3 @@ module.exports = {
 }
 
 
-// FormId: {
-//     type: mongoose.Schema.Types.ObjectId,
-//     ref: 'Form'
-//   },
-
-//   userId: {
-//     type: mongoose.Schema.Types.ObjectId,
-//     ref: 'User'     
-//   },
-
-//   response : [{
-//       questionId: String,
-//       optionId: String,
-//   }],
