@@ -10,5 +10,4 @@ const validate = (schema) => async (req, res, next) => {
       next(err);
     }
   };
-  
-  export default validate;
+  module.exports = { validate };

@@ -1,3 +1,4 @@
+const path = require("path");
 const express = require("express");
 const bodyParser = require('body-parser');
 const mongoose  = require("mongoose");
@@ -5,7 +6,8 @@ const app = express();
 const cors = require("cors");
 const { MONGO_URL } = require('./config/environment');
 const router = require("./routes/router");
-const path = require("path");
+const {errorHandler} = require("./middlewares/error");
+
 //MongoDb connection
 mongoose.connect(MONGO_URL).then(()=>{console.log("MongoDB is connected")})
  .catch((err)=>{console.error(err)});
@@ -25,5 +27,9 @@ app.get("/", (_, res)=> {
 
 //Api routes
 app.use('/api', router);
+
+
+//Handle error
+app.use(errorHandler);
 
 module.exports = { app };
