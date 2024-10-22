@@ -4,52 +4,39 @@ const bcryptjs = require("bcryptjs");
 const { SECRET_KEY } = require('../config/environment');
 
 module.exports = {
-    getUsers : async(req,res)=>{
-        try{
-            const result = await UserModel.find().lean();
-            if(Array.isArray(result)) {
-              return res.status(200).json(result.map(({password, createdForms,__v, ...rest})=>({...rest})))
-            }
-            res.status(200).json([]);     
-        }catch(e){
-            res.send(e);
-        }
-    },
-    register: async (req, res) => {
-        
-        const { email, password, name } = req.body;
-        try {
-          const result = await UserModel.findOne({email:req.body.email}).lean()
-          if(result){
-            return res.status(400).json({error: "User allready exists"})
-          }
+  getAllUsers: async()=> {
+    return await UserModel.find().lean();
+  },
+  getUserById: async(id)=> {
+    return await UserModel.findById(id).lean();
+  },
+  getUserByEmail: async(email)=> {
+    console.log(email)
+    return await UserModel.findOne({ email }).lean();
+  },
+  createUser: async(data)=> {
+    const hashedPassword = bcryptjs.hashSync(data.password, 10);
+    const user = new UserModel({
+      name: data.name,
+      email: data.email,
+      password: hashedPassword
+      });
+    return await user.save();
+  },
+  updateUser: async(id, data)=> {
+    return await UserModel.findByIdAndUpdate(id, data, {new: true}).lean();
+  },
+  deleteUser: async(id)=> {
+    return await UserModel.findByIdAndDelete(id);
+  },
 
-          const hashedPassword = await bcryptjs.hash(password, 10);
-          const user = new UserModel({ email, password: hashedPassword, name });
-          const newUser = await user.save();
-          const accessToken = jwt.sign({email, name, id: newUser._id}, SECRET_KEY, {expiresIn: '24h'});
-          return res.json({ accessToken, user: {email, name} });
-        } catch (error) {
-          return res.status(500).json({error: "something went wrong"});
-        }
+  generateAccessToken: (tokenPayload)=> {
+    return jwt.sign(tokenPayload, SECRET_KEY, {expiresIn: '24h'});
+  },
 
-    },
-    login: async(req,res)=>{   
-        const { email, password } = req.body;
-        try {
-          const user = await UserModel.findOne({email:req.body.email}).lean()
-          if(!user){
-            return res.status(400).json({error: "User doesn't exists"});
-          }
-          const isValidPassword = await bcryptjs.compare(password, user.password);
-          if(!isValidPassword){
-            return res.status(400).json({error: "Invalid password"});
-          }
-          const accessToken = jwt.sign({email, name: user.name, id: user._id}, SECRET_KEY, {expiresIn: '24h'});
-          return res.json({ accessToken, user: {email, name:user.name, id: user._id} });
-        } catch (error) {
-          return res.status(500).json({error: "something went wrong"});
-        }
-    }
+  comparePassword: async (password, hashedPassword)=> {
+    return await bcryptjs.compare(password, hashedPassword);
+  }
+
 
 }
