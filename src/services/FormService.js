@@ -34,18 +34,9 @@ module.exports = {
         return await FormModel.findByIdAndUpdate(formId, data ,{new: true});
     },
     getFormsByIds: async (formIds)=> {
-        return new Promise(async (resolve, reject)=> {
-            try {
-                await FormModel.find().where('_id').in(formIds).exec((err, records) => {
-                    if(err) {
-                        return reject(err);
-                    }
-                    return resolve(records);
-                });
-            } catch(error) {
-                return reject(error);
-            }
-        })
+        formIds = formIds.map((id)=> id && id.toString ? id.toString() : id);
+        const forms = await FormModel.find().where('_id').in(formIds).exec();
+        return forms;
     },
     getFromResponsesByFormId : async(formId)=> {
         return await ResponseModel.find({formId: formId}).lean();

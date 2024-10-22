@@ -1,4 +1,5 @@
 const userService = require("../services/UserService");
+const formService = require("../services/FormService");
 const {ApiError} = require("../utils/ApiError");
 
 module.exports = {
@@ -42,6 +43,18 @@ module.exports = {
           }
           const accessToken = userService.generateAccessToken({email, name: user.name, id: user._id});
           return res.json({ accessToken, user: {email, name:user.name, id: user._id} });
-    }
+    },
+    getAllFormsOfUser: async(req, res)=>{
+      const userId = req.params.userId;
+      const user = await userService.getUserById(userId);
+      if(!user) {
+          throw new ApiError(403);
+      }
+      if(!Array.isArray(user.createdForms)) {
+          return res.status(200).json([]);
+      }
+      const forms = await formService.getFormsByIds(user.createdForms);
+      return res.status(200).json(forms);   
+  },
 
 }
