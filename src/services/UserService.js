@@ -1,65 +1,54 @@
 const UserModel = require('../model/User')
 const jwt = require('jsonwebtoken');
+const bcryptjs = require("bcryptjs");
+const { SECRET_KEY } = require('../config/environment');
 
 module.exports = {
-    loginGet : async(req,res)=>{
+    getUsers : async(req,res)=>{
         try{
             const result = await UserModel.find().lean();
-            res.send(result);     
+            if(Array.isArray(result)) {
+              return res.status(200).json(result.map(({password, createdForms,__v, ...rest})=>({...rest})))
+            }
+            res.status(200).json([]);     
         }catch(e){
             res.send(e);
         }
     },
-
-    login: async(req,res)=>{   
-        console.log(req.body.email);
+    register: async (req, res) => {
+        
+        const { email, password, name } = req.body;
         try {
-            const result = await UserModel.findOne({email:req.body.email}).lean()
-               // console.log(result);
-                
-                if(!result){
-                    const gData = {
-                        name: req.body.name,
-                        email: req.body.email,
-                        image: req.body.image
-                    }
-                    console.log(gData);
-                    
-                    const newUser = new UserModel(gData)
-                    newUser.save().then((docs)=>{                        
-                        const user = { 
-                                   id: docs._id, 
-                                   name: docs.name,  
-                                   email: docs.email,
-                                   image: docs.image
-                                 }
-                                 console.log(user);
-                                 
-                       const accessToken = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, {expiresIn: '24h'});
-                      // console.log(accessToken);
-                       
-                       res.status(200).json({
-                           accessToken
-                       });
-                    })
-                } else {        
-                        const user = { 
-                            id: result._id, 
-                            name: result.name,  
-                            email: result.email,
-                            image: result.image
-                          }
-                         // console.log(user);
-                          
-                        const accessToken = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, {expiresIn: '24h'});
-                       // console.log(accessToken);
-                        res.status(200).json({
-                            accessToken
-                        });   
-                }  
-           
+          const result = await UserModel.findOne({email:req.body.email}).lean()
+          if(result){
+            return res.status(400).json({error: "User allready exists"})
+          }
+
+          const hashedPassword = await bcryptjs.hash(password, 10);
+          const user = new UserModel({ email, password: hashedPassword, name });
+          const newUser = await user.save();
+          const accessToken = jwt.sign({email, name, id: newUser._id}, SECRET_KEY, {expiresIn: '24h'});
+          return res.json({ accessToken, user: {email, name} });
         } catch (error) {
-            res.send(error)
+          return res.status(500).json({error: "something went wrong"});
+        }
+
+    },
+    login: async(req,res)=>{   
+        const { email, password } = req.body;
+        try {
+          const user = await UserModel.findOne({email:req.body.email}).lean()
+          if(!user){
+            return res.status(400).json({error: "User doesn't exists"});
+          }
+          const isValidPassword = await bcryptjs.compare(password, user.password);
+          if(!isValidPassword){
+            return res.status(400).json({error: "Invalid password"});
+          }
+          const accessToken = jwt.sign({email, name: user.name, id: user._id}, SECRET_KEY, {expiresIn: '24h'});
+          return res.json({ accessToken, user: {email, name:user.name} });
+        } catch (error) {
+          return res.status(500).json({error: "something went wrong"});
         }
     }
 
