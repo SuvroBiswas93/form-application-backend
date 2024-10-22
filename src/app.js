@@ -1,5 +1,3 @@
-require('express-async-errors');
-const path = require("path");
 const express = require("express");
 const bodyParser = require('body-parser');
 const mongoose  = require("mongoose");
@@ -7,9 +5,7 @@ const app = express();
 const cors = require("cors");
 const { MONGO_URL } = require('./config/environment');
 const router = require("./routes/router");
-const {errorHandler} = require("./middlewares/error");
-const { JSONresponseFormatter } = require('./middlewares/responseFormatter');
-
+const path = require("path");
 //MongoDb connection
 mongoose.connect(MONGO_URL).then(()=>{console.log("MongoDB is connected")})
  .catch((err)=>{console.error(err)});
@@ -22,18 +18,12 @@ app.use(bodyParser.json({limit : '50mb',extended : true}));
 app.use(bodyParser.urlencoded({limit: '50mb',extended : true}));
 app.use(express.json());
 
-//format Json response
-app.use(JSONresponseFormatter);
 //Health check route
 app.get("/", (_, res)=> {
-  return res.status(201).json("application is running")
+  return res.json({message: "application is running"})
 });
 
 //Api routes
 app.use('/api', router);
-
-
-//Handle error
-app.use(errorHandler);
 
 module.exports = { app };
