@@ -3,16 +3,27 @@ const {createForm, formsGet, getFormById, deleteForm, editForm, allResponses, su
 const {validate} = require("../middlewares/validator");
 const formSchemas = require("../validations/formValidation");
 
-router.route("/").post( validate(formSchemas.createFormSchema),createForm);
-router.route("/").get(formsGet);
-router.route("/:formId").get(validate(formSchemas.getFormById),getFormById);
-router.route("/:formId/:userId").delete(validate(formSchemas.deleteForm),deleteForm);
-router.route("/:formId").put( validate(formSchemas.editFormSchema), editForm);
-router.route("/responses").post(submitResponse);
+
+// Form responses (specific formId)
+router.route("/:formId/responses")
+    .post(validate(formSchemas.submitResponse), submitResponse)
+    .get(getResponse);
+
+// All responses (without specific formId)
 router.route("/responses").get(allResponses);
 
-router.route("/:formId/responses").get(getResponse);
+// CRUD operations for a specific form
+router.route("/:formId")
+    .get(validate(formSchemas.getFormById), getFormById)
+    .put(validate(formSchemas.editFormSchema), editForm);
 
+// Delete form with both formId and userId (more specific route)
+router.route("/:formId/:userId")
+    .delete(validate(formSchemas.deleteForm), deleteForm);
 
+// Create and fetch all forms (generic routes at the bottom)
+router.route("/")
+    .post(validate(formSchemas.createFormSchema), createForm)
+    .get(formsGet);
 
 module.exports = router;

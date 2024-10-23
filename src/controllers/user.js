@@ -5,13 +5,17 @@ const {ApiError} = require("../utils/ApiError");
 module.exports = {
 
     getUsers : async(_,res)=>{
-            const result = await userService.getAllUsers();
-            if(Array.isArray(result)) {
-              return res.status(200).json(result.map(({password, createdForms,__v, ...rest})=>({...rest})))
+            const users = await userService.getAllUsers();
+            if(Array.isArray(users)) {
+              return res.status(200).json(users)
             }
             res.status(200).json([]);
     },
-
+    getUserById: async (req, res) => {
+      const userId = req.params.userId;
+      const user = await userService.getUserById(userId);
+      return res.status(200).json(user);
+    },
     register: async (req, res) => {
         
         const { email, password, name } = req.body;
@@ -44,17 +48,20 @@ module.exports = {
           const accessToken = userService.generateAccessToken({email, name: user.name, id: user._id});
           return res.json({ accessToken, user: {email, name:user.name, id: user._id} });
     },
-    getAllFormsOfUser: async(req, res)=>{
+
+    getAllFormsOfUser: async (req, res) => {
       const userId = req.params.userId;
+
+      // Check if the user exists
       const user = await userService.getUserById(userId);
-      if(!user) {
-          throw new ApiError(403);
+      if (!user) {
+          throw new ApiError(404, "User not found");
       }
-      if(!Array.isArray(user.createdForms)) {
-          return res.status(200).json([]);
-      }
-      const forms = await formService.getFormsByIds(user.createdForms);
-      return res.status(200).json(forms);   
+
+      // Fetch all forms created by this user
+      const forms = await formService.getFormsByUserId(userId);
+
+      return res.status(200).json(forms);
   },
 
 }

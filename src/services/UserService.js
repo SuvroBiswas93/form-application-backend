@@ -2,13 +2,19 @@ const UserModel = require('../model/User')
 const jwt = require('jsonwebtoken');
 const bcryptjs = require("bcryptjs");
 const { SECRET_KEY } = require('../config/environment');
+const {ApiError} = require("../utils/ApiError")
 
 module.exports = {
   getAllUsers: async()=> {
-    return await UserModel.find().lean();
+    return await UserModel.find().select('-password');
   },
-  getUserById: async(id)=> {
-    return await UserModel.findById(id).lean();
+  getUserById: async (userId) => {
+    // Find the user by ID
+    const user = await UserModel.findById(userId).select('-password');
+    if (!user) {
+        throw new ApiError(404, "User not found");
+    }
+    return user;
   },
   getUserByEmail: async(email)=> {
     console.log(email)
@@ -37,6 +43,5 @@ module.exports = {
   comparePassword: async (password, hashedPassword)=> {
     return await bcryptjs.compare(password, hashedPassword);
   }
-
 
 }

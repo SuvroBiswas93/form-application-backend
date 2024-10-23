@@ -2,24 +2,11 @@ const mongoose = require('mongoose');
 const mongoosePaginate = require('mongoose-paginate-v2');
 
 const ResponseSchema = new mongoose.Schema({
-
-  formId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'Form'
-  },
-
-  userId: {
-    type: String    
-  },
-
-  response : [{
-      questionId: String,
-      optionId: String,
-  }],
-  
- }, {timestamps: true});
+  form: { type: mongoose.Schema.Types.ObjectId, ref: 'Form', required: true },
+  user: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: false },
+ answers: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Answer' }]
+},  {timestamps: true});
 
 ResponseSchema.plugin(mongoosePaginate);
-Response = mongoose.model('Response', ResponseSchema ,'Response');
-
-module.exports = Response; 
+const Response = mongoose.model('Response', ResponseSchema);
+module.exports = Response;

@@ -5,33 +5,23 @@ const FormSchema = new mongoose.Schema({
 
   createdBy: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'User'
+    ref: 'User',
+    required: true
   },
 
-  name: String,
+  name: { type: String, required: true },
 
   description: {
     type: String,
     default: ""
   },
-
-  questions : [{
-    open: {type: Boolean, default: false},
-    questionText: String,
-    questionImage: {type: String, default: ""},
-    options: [{
-      optionText : String,
-      optionImage: {type: String, default: ""},
-    }],
-  }],
-
-  stared : {type: Boolean, default : false},
-
-  formType: {type: String, default: "anonymous" }
+  questions: [
+    { type: mongoose.Schema.Types.ObjectId, ref: 'Question' }
+  ],
   
+  isActive : {type: Boolean, default : true},
+
  }, {timestamps: true});
 
 FormSchema.plugin(mongoosePaginate);
-Form= mongoose.model('Form', FormSchema ,'Form');
-
-module.exports = Form; 
+module.exports= mongoose.model('Form', FormSchema);
